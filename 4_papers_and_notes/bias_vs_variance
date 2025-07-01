@@ -1,0 +1,8 @@
+Bias = Error caused by wrong predictions in the learning algorhthm
+Variance = Error caused by sensitivity to to small changes in the training data
+
+Low bias is when the model over complicates the problem. For example weight and height in mice comparsions, Due to natural variation each datapoint will vary each centimeter,
+So a low bias model would over complicate the problem and think every single variation due to randomness has a meaning and a pattern and would overfit the line causing it to appear
+very sensitive/squiggly
+
+A high variance model changes drasticly when small changes are made to a dataset so when using a training set with tiny differences its predictions are off
