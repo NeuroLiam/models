@@ -1,0 +1,113 @@
+Sigmoid:
+Function: f(x) = 1 / (1 + e^(-x)
+Summary: Condenses all the inputs between 0 and 1
+Pros: Good at multi-label classification (Ignores all other outputs), Condenses information between 0 and 1
+Cons: Vanishing gradient (Gradient gets really small), Not centered, Low gradient (slow convergence), Saturated output, Expensive to compute, Not expressive on complex datasets
+
+
+
+Softmax:
+Function: f(xᵢ) = e^zᵢ / Σe^zⱼ
+Summary: Condenses all the logits into a probability distribution in correlation to eachother between 0 and 1
+Pros: Probability distribution, Comparative confidence, Good for multiclass tasks, Differentiable and smooth, Exponentially enhances logits
+Cons: Assumes mutual exclusivity, Overconfidence (99.9%), Sensitive to large logits (Need to keep them all relatively close), No independence between outputs, Requires normalization
+
+
+
+Tanh:
+Function: f(x) = (e^x − e^−x) / (e^x + e^−x)
+Summary: Condenses all the inputs between -1 and 1
+Improvement: Centered around 0 (Faster and more stable training), Stronger gradient (Faster gradient descent)
+Pros: Zero-centered, Stronger gradient, Smooth and continuous (Better gradient flow / More optimal gradient descent), More expressive than ReLU
+Cons: Vanishing gradient, Slow convergence (compared to ReLU), Less efficient (Compared to ReLU), Not used in modern LLMs
+
+
+
+ReLU:
+Function: f(x) = max(0, x)
+Summary: Every value over 1 increases linearly by x
+Improvement: Eliminates vanishing gradient problem, Simpler computation (removes exp), Unbounded outputs
+Pros: No vanishing gradient issues, Fast to compute, Simplifies optimizations, Unbounded output, Works well with modern techniques
+Cons: Dying ReLU problem, Exploding activations, Not 0 centered, No gradient for x < 0
+
+
+
+Leaky ReLU:
+Function: f(x) = max(0.01x, x)
+Summary: ReLU but x < 0 has a gradient
+Improvement: Fixes dead neurons, Gradient is never 0, Better weight updates, More expressive (Negative outputs)
+Pros: Avoids vanishing gradients, Fast and cheap, Avoids dead neurons, Fixes ReLU’s flaw, Gradient is never 0, More expressive
+Cons: Negative slope is fixed, Still not 0 centered, More tuning required
+
+
+
+ELU:
+Function: Return x if x > 0 else α * (exp(x) − 1)
+Improvements: Smooth gradient transitions, Stronger gradient, More biologically accurate, Faster convergence
+Pros: Smooth gradient for x < 0, Keeps gradient alive, Implicit regularization, Faster convergence
+Cons: Vanishing gradient problem (x ≪ 0), Computationally expensive, Needs tuning (hyperparameter), Unbounded for x > 0, Sensitive to initialization
+
+
+
+Swish:
+Function: f(x) = x / (1 + e^(-x))
+Improvements:
+Sigmoid → avoids saturation, allows gradient flow, not bounded to (0,1)
+Tanh → unbounded output allows richer features
+ReLU → allows small negative values → avoids dead neurons
+Leaky ReLU → smoother curve instead of fixed negative slope
+ELU → avoids exponential cost, doesn’t compress activations harshly
+All → smooth, differentiable, and supports better convergence in deep nets
+Pros: Smooth and differentiable, Avoids dead neurons, Non-monotonic (Expressive power / Captures more complex patterns), No sharp squashing, Improves convergence
+Cons: Slower than ReLU, Not fully zero-centered, Needs good initialization, Can saturate at extremes, Potential for exploding gradients
+
+
+
+GeLU:
+Function: f(x) = x * Φ(x) = 0.5 * x * (1 + erf(x / sqrt(2)))
+Improvements: Reduces Vanishing gradient, More centered around zero, Smoother activation curve, No tunable parameters, Faster convergence in deep transformers, More numerically stable, Probabilistic justification
+Pros: Zero-centered, Smooth and non-monotonic, Theoretically grounded (From proberbility), No parameters needed, Proven in top-tier models, Gradients always alive, Good for deep networks
+Cons: Slightly slower than ReLU, Harder to interpret visually, Not optimal for all hardware (mobile issues)
+Side Note: GeLU is often changed to be faster called FastGELU, Function: f(x) ≈ 0.5 × x × (1 + tanh(√(2/π) × (x + 0.044715 × x³)))
+
+
+
+RPeLU:
+Function: Same as Leaky ReLU but the hyperparameter α is adjusted via backpropagation
+Summary: Learns the best slope for negative inputs during training
+Note: Real name is PReLU (Parametric ReLU)
+
+
+
+Maxout:
+Function: f(x) = max(w₁ᵀx + b₁, w₂ᵀx + b₂)
+Summary: Combines multiple linear outputs and selects the max — acts like a trainable activation function
+Pros: Avoids dead neurons entirely, Learns its own activation shape, Can approximate ReLU/sigmoid/tanh behavior, Improves performance in some shallow networks
+Cons: Requires multiple sets of weights per neuron, More expensive to compute, Overfitting risk, Rarely used in transformers
+Use Case: Historically relevant — now replaced by GELU/Swish for speed and smoothness
+
+
+
+SiLU (a.k.a. Swish with β = 1):
+Function: f(x) = x / (1 + e^(-x))
+Summary: SiLU is identical to Swish when β = 1. It’s used in models like EfficientNet and MobileNetV3
+Pros: Smooth and differentiable, Avoids dead neurons, Unbounded output, More expressive than ReLU, Hardware efficient
+Cons: Slower than ReLU, Still not 0-centered, Can saturate at extremes
+
+
+
+Mish:
+Function: f(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^x))
+Summary: A smooth, non-monotonic function like Swish but with a more natural curve
+Pros: Smooth, avoids dead neurons, better regularization, good generalization, state-of-the-art in some vision models
+Cons: Slower than ReLU, more complex to compute, less tested in transformers
+
+Choosing the Right Activation:
+
+- Use **ReLU** if you need something fast and simple (most common default)
+- Use **Leaky ReLU** or **PReLU** if ReLU is causing dead neurons
+- Use **Swish** or **SiLU** in CNNs or mid-sized models
+- Use **GELU** in transformers or language models (best default for LLMs)
+- Use **Mish** in image models where you want smooth, expressive activations
+- Avoid **Sigmoid** and **Tanh** in deep nets unless doing binary tasks or legacy systems
+- Use **Softmax** only at the final layer for classification
