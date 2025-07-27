@@ -1,0 +1,70 @@
+Forward propergation relies on these two functions
+
+z = W*x + b         # Mutliplies the inputs (x) by the Weights (W) and adds the bias (b) (All of which is matrix multiplication)
+a = f(z)            # The activation function is applied to the matrix (z)
+
+L = layer           # The neural networks layers
+zᴸ = Wᴸ·aᴸ⁻¹ + bᴸ   # Gets the current layer of weights and multiplies it by the result of the activation of the layer before it and adds the current layers bias
+aᴸ = fᴸ(zᴸ)         # Applies the activation function being used for this layer
+
+a⁰ = x              # If we are on the first layer the inputs (x) are used instead
+
+
+
+
+Forward propagation is a way to compute predictions by passing the inputs through a series of layers, each performing a linear transformation followed by an activation function.
+
+
+
+
+a⁰ = x = [1, 2, 3, 4]ᵀ  → shape [4 × 1] # Inputs
+
+W¹ = [3 × 4], b¹ = [3 × 1]         # The dimentions of the randomly generated weights and biases, These represent the previous layer having 4 outputs and on the current layer we have 3 neurons
+z¹ = W¹·a⁰ + b¹                    # We multiply the weights of the current layer by the inputs and add the bias
+a¹ = ReLU(z¹)                      # We apply the ReLU activation function to the z¹
+
+Then...
+W² = [2 × 3], b² = [2 × 1]         # Again the dimentions of the weights and biases, These represent the previous layer having 3 neurons and on the current layer there are 2 neurons 
+z² = W²·a¹ + b²                    # We multiply the weights of the current layer by the output of the previous layer and add the bias
+a² = Softmax(z²) → final output    # Apply a softmax activation function on z² to get a final output
+
+
+
+
+Matrix Shape Rules
+
+zᴸ = Wᴸ·aᴸ⁻¹ + bᴸ        # The function
+Wᴸ: [nᴸ × nᴸ⁻¹]          # Wᴸ shape is the number of neurons on the current layer by the number of neurons on the last layer
+aᴸ⁻¹: [nᴸ⁻¹ × 1]         # The shape of the output of the last layer is the number of neurons on the last layer by 1
+bᴸ: [nᴸ × 1]             # The shape of the bias is the number of neurons on this layer by 1
+
+→ zᴸ: [nᴸ × 1]           # The pre-activation output shape is the number of neurons on this layer by 1
+→ aᴸ: [nᴸ × 1]           # The output of the layer shape is the number of neurons by 1
+
+
+
+
+Components Table
+
+Symbol	  Meaning	                          Shape
+a⁰	      Input vector	                    [n⁰ × 1]
+Wᴸ	      Weight matrix of layer L	        [nᴸ × nᴸ⁻¹]
+bᴸ	      Bias vector of layer L	          [nᴸ × 1]
+zᴸ	      Pre-activation output (layer L)  	[nᴸ × 1]
+aᴸ	      Activated output (layer L)	      [nᴸ × 1]
+
+
+
+
+Summery:
+
+This system scales to deep neural nets, its modular and repeatable, its fully differentiable, Works with any activation function
+However this doesn no weight learning, Requires careful activation and init to avoid exploding/vanishing outputs, 
+
+
+
+
+What Happens Next?
+
+The output aᴸ is compared to the correct values to calculate a loss function
+Then backpropergation is then used to adjust the weights by passing gradients backwards through the same layers
