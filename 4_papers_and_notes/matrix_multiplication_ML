@@ -1,0 +1,45 @@
+Matrix multiplication rule:
+x = input
+W = Weight
+
+W [n_output x n_input] * x [n_input x 1] -> z [n_output x 1]
+W [3,2] * x [2,1] -> [3,1]
+
+x = [1
+     2
+     3
+     4]
+input_dim =  [4,1]
+output_dim = [3,1]   # 3 neurons in hidden layer
+
+W [n_output,n_input] * x [n_input, 1] = z [n_output, 1]
+W [3,4] * x [4, 1] = z [3, 1]
+
+
+Note: When multiplying matricies you multiply the rows by the collums
+rows = →
+columns = ↓
+         
+
+Note: The 2nd and 1st numbres in a matrix dimentionallity must match
+e.g. [2,5] * [5,9]  
+The 5 in the first matrix (2nd number) matches the 5 in the second matrix (1st number)
+
+W = [ 1,1,2,2
+      3,3,4,4
+      5,5,6,6]
+
+    [ 1,1,2,2         [1
+  W   3,3,4,4    *  x  2
+      5,5,6,6]         3 
+                       4]
+
+= z [1×1 + 1×2 + 2×3 + 2×4  = 17
+     3×1 + 3×2 + 4×3 + 4×4  = 37
+     5×1 + 5×2 + 6×3 + 6×4  = 57]
+
+= z [17
+     37
+     57]
+
+z_dim = [3,1]
