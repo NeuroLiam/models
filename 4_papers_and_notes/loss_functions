@@ -1,0 +1,63 @@
+Mean squared error
+Function: L = (1/n) * Σ (yᵢ - ŷᵢ)²
+Summery: Calculates the avarage squared difference between the predicted and correct values
+Pros: Simple to compute, Smooth gradients, Penalizes large errors strongly, works well for regression
+Cons: Sensitive to outliers, Not great for classification, Squaring can exaggerate bad predictions, No probabilistic interpretation
+Used for: Regression models
+
+
+
+
+Mean Absolute Error
+Function: L = (1/n) * Σ |yᵢ - ŷᵢ|
+Summery: Measures the avarage magnitude of error without squaring. Treats all errors equally
+Pros: More robust to outliers than MSE, Easier to interpret, Linear penalty
+Cons: Non-differentiable at zero, Slower gradient convergence, Less sensitive to large errors
+Used for: Alternative to MSE when you want robust regression
+
+
+
+
+Huber Loss
+Function: Mixture of MSE and MAE, For small errors it uses MSE for big errors it uses MAE
+Summery: Smoothens the squaring of MSE but its sensitive enough for effective training
+Pros: Combines stability of MSE with robustness of MAE, Differentiable everywhere, Tunable sensitivity (delta)
+Cons: Requires hyperparameter tuning, Slightly more complex to implement
+Used for: Best for noisy regression with outliers.
+
+
+
+
+Multiclass Cross-Entropy Loss
+Function: (1/N) * L = -Σ yᵢ * log(ŷᵢ)
+Summery: Compares predicted probability distribution (from softmax) with the true class (one-hot encoded). Punishes confident wrong predictions heavily.
+Pros: Strong theoretical grounding, Great for classification (Mutually exclusive classes), Emphasizes confident mistakes, Smooth gradients for learning
+Cons: Needs softmax applied first, Not for regression tasks or multi-class tasks, Can be unstable if ŷᵢ → 0 (Often a boundry is used to stop exploding gradient issues)
+Used for: Classification tasks like dog vs cat vs horse, where only one label is correct
+
+
+
+
+Binary Cross-Entropy Loss
+Function: L = - [ y * log(ŷ) + (1 - y) * log(1 - ŷ) ]
+Summery: Compares the true binary label to the predicted probability from sigmoid.
+Pros: Great for binary or independent multi-label classification, More efficient than using softmax for two classes, Works with a single output neuron
+Cons: Needs sigmoid activation, Less interpretable across multiple labels
+Used for: Binary tasks like cat vs not-cat or spam detection, where each output is independent of others (Sigmoid)
+
+
+
+
+Choosing the Right Loss Function:
+
+- Use MSE for standard regression tasks
+- Use MAE when your data has outliers
+- Avoid MSE/MAE for classification — they're not probabilistically meaningful and give weak gradients for classification problems
+- Use Huber Loss for balanced regression
+
+- Use Binary Cross-Entropy when each class is independent (use sigmoid at output)
+↳ Example: Image can be toxic and threatening at the same time
+
+- Use Multiclass Cross-Entropy when only one class is correct (use softmax at output)
+↳ Example: Classifying between dog, cat, or horse
+
