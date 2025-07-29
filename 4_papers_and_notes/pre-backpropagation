@@ -1,0 +1,82 @@
+Partial Derivatives
+Definition: How the function changes as one varible changes as the rest are treated as constants
+Example:
+
+f(x,y,z) = 5x^3 + 2z^2 + 5xy + 2y + 4
+
+∂f/∂x = 15x^2 + 0 + 5y + 0 + 0 = 15x^2 + 5y
+
+# 5x is the varible, so we differentiate it normally, 2z^2 is a constant, all constant gradients are 0, 5x is a varible and y is the coefficent (5xy -> 5y*x)
+# the x differentiated is 1 so its 5y*1 which is 5y, 2y is a constant, 4 is a constant, all constats are 0
+# Rule of thumb is that the varible is on the bottom of the fraction, the rest are constants
+
+∂f/∂x = 15x^2 + 5y # represents how as xchanges how the function changes
+∂f/∂y = 5x + 2
+∂f/∂z = 4z
+
+
+
+
+Gradient Vectors
+∇𝑓(x,y,z) = [15x^2 + 5y, 5x + 2, 4z] # A gradient represented as a vector that points in the direction of greatest value increase
+                              # If we plug in x,y,z (coords) we will get the vector gradient of that position
+
+E.G.
+∇𝑓(5,8,2) = [375 + 40 = 415, 25 + 2 = 27, 8] = [415,27,8] # This is the gradient vector
+For backpropergation we want to minamize the function so we would do -∇𝑓 of the function
+In this case thats [-415,-27,-8]
+Then we apply a learning rate, 1/1000
+[-415/1000, -27/1000, -8/1000]
+[-0.415, -0.027, -0.008]
+# Now we take the new vector and add it to the origonal starting position ∇𝑓(5,8,2) [5,8,2]
+[5,8,2] + [-0.415, -0.027, -0.008] = [4.585, 7.973, 1.992]
+If we replug the new values into the origonal function our output will be smaller
+f(4.585, 7.973, 1.992) ≈  692.627
+f(5,7,2) = 853
+853 > 692.627, This will repeat till the function reaches as close as it can get to 0
+
+
+
+
+Chain rule:
+
+How fast outer function changes through the inner function, For multivarible chain rule it is when mutiple varibles depend on something else (like time, t)
+
+f(x(t), y(t)) = 5x^2 + 6y
+x(t)=3t^2
+y(t)=2t+1
+
+df/dt = ∂f/∂x * dx/dt + ∂f/∂y * dy/dt
+
+∂f/∂x = 10x
+dx/dt = 6t
+∂f/∂y = 6
+dy/dt = 2
+
+10x * 6t + 6 * 2 = 60xt + 12
+
+df/dt = 60xt + 12
+
+
+
+
+
+Matrix Shape
+
+| Symbol     | Meaning                                                      |
+|------------|--------------------------------------------------------------|
+| **B**      | Batch size (number of input examples per forward pass)       |
+----------------------------------------------------------------------------|
+| **M**      | Number of inputs to a layer (neurons in previous layer)      |
+----------------------------------------------------------------------------|
+| **N**      | Number of outputs from the layer (neurons in current layer)  |
+----------------------------------------------------------------------------|
+| **A[l−1]** | Activations from the previous layer, shape: (B × M)          |
+----------------------------------------------------------------------------|
+| **W[l]**   | Weight matrix, shape: (M × N)                                |
+----------------------------------------------------------------------------|
+| **Z[l]**   | Pre-activation (raw weighted sum), shape: (B × N)            |
+----------------------------------------------------------------------------|
+| **A[l]**   | Post-activation output (after applying σ), shape: (B × N)    |
+----------------------------------------------------------------------------|
+
