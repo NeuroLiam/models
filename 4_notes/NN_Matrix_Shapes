@@ -1,0 +1,105 @@
+# Neural Network Matrix Shapes (Forward + Backpropagation)
+
+This document uses the notation:
+- M ∈ ℝ^{r×c}       : Matrix M is real-valued with r rows and c columns
+- ℝ                : Real numbers
+- b                : Batch size (number of inputs processed at once)
+- m                : Number of inputs into the current layer (i.e. output size of previous layer)
+- n                : Number of neurons in the current layer
+- nᵢ               : Number of neurons in layer i
+- L                : Total number of layers (excluding input)
+- ⊙                : Element-wise multiplication
+
+---
+
+## 🔁 Forward Propagation
+
+Assume a 3-layer network:
+Input (n₀ = 2) → Hidden1 (n₁ = 5) → Hidden2 (n₂ = 3) → Output (n₃ = 1)
+
+### Layer 1 (Input → Hidden1)
+- Input batch:         `X ∈ ℝ^{b×n₀}`
+- Weights:             `W₁ ∈ ℝ^{n₀×n₁}` ← (m = n₀, n = n₁)
+- Bias:                `b₁ ∈ ℝ^{1×n₁}`
+- Pre-activation:      `Z₁ = X·W₁ + b₁ ∈ ℝ^{b×n₁}`
+- Activation output:   `A₁ = f(Z₁) ∈ ℝ^{b×n₁}`
+
+### Layer 2 (Hidden1 → Hidden2)
+- Weights:             `W₂ ∈ ℝ^{n₁×n₂}` ← (m = n₁, n = n₂)
+- Bias:                `b₂ ∈ ℝ^{1×n₂}`
+- Pre-activation:      `Z₂ = A₁·W₂ + b₂ ∈ ℝ^{b×n₂}`
+- Activation output:   `A₂ = f(Z₂) ∈ ℝ^{b×n₂}`
+
+### Layer 3 (Hidden2 → Output)
+- Weights:             `W₃ ∈ ℝ^{n₂×n₃}` ← (m = n₂, n = n₃)
+- Bias:                `b₃ ∈ ℝ^{1×n₃}`
+- Pre-activation:      `Z₃ = A₂·W₃ + b₃ ∈ ℝ^{b×n₃}`
+- Activation output:   `A₃ = σ(Z₃) ∈ ℝ^{b×n₃}`
+
+- Predictions:         `ŷ ∈ ℝ^{b×n₃}` (for binary: n₃ = 1)
+- Ground truth labels: `y ∈ ℝ^{b×n₃}`
+
+---
+
+## 🔁 Backpropagation
+
+### Output Layer (Layer 3)
+- `dA₃ = ∂L/∂A₃ ∈ ℝ^{b×n₃}`
+- `dZ₃ = dA₃ ⊙ σ′(Z₃) ∈ ℝ^{b×n₃}`
+- `dW₃ = A₂ᵀ · dZ₃ ∈ ℝ^{n₂×n₃}` ← (m = n₂, n = n₃)
+- `db₃ = sum_rows(dZ₃) ∈ ℝ^{1×n₃}`
+- `dA₂ = dZ₃ · W₃ᵀ ∈ ℝ^{b×n₂}`
+
+### Hidden Layer 2
+- `dZ₂ = dA₂ ⊙ f′(Z₂) ∈ ℝ^{b×n₂}`
+- `dW₂ = A₁ᵀ · dZ₂ ∈ ℝ^{n₁×n₂}` ← (m = n₁, n = n₂)
+- `db₂ = sum_rows(dZ₂) ∈ ℝ^{1×n₂}`
+- `dA₁ = dZ₂ · W₂ᵀ ∈ ℝ^{b×n₁}`
+
+### Hidden Layer 1
+- `dZ₁ = dA₁ ⊙ f′(Z₁) ∈ ℝ^{b×n₁}`
+- `dW₁ = Xᵀ · dZ₁ ∈ ℝ^{n₀×n₁}` ← (m = n₀, n = n₁)
+- `db₁ = sum_rows(dZ₁) ∈ ℝ^{1×n₁}`
+
+---
+
+## 🔁 Parameter Updates
+
+For all layers `l ∈ {1, 2, 3}`:
+W_l ← W_l - α · dW_l
+b_l ← b_l - α · db_l
+
+yaml
+Copy
+Edit
+Where:
+- α = learning rate
+- Update shapes match original parameter shapes
+
+---
+
+## ✅ Summary Table
+
+| Matrix        | Shape (Dim)         | Description                          |
+|---------------|---------------------|--------------------------------------|
+| X             | b × n₀              | Input features                       |
+| W₁            | n₀ × n₁             | Weights: Input → Hidden1             |
+| b₁            | 1 × n₁              | Bias for Hidden1                     |
+| Z₁, A₁        | b × n₁              | Pre/post activation of Hidden1       |
+| W₂            | n₁ × n₂             | Weights: Hidden1 → Hidden2           |
+| b₂            | 1 × n₂              | Bias for Hidden2                     |
+| Z₂, A₂        | b × n₂              | Pre/post activation of Hidden2       |
+| W₃            | n₂ × n₃             | Weights: Hidden2 → Output            |
+| b₃            | 1 × n₃              | Bias for Output                      |
+| Z₃, A₃        | b × n₃              | Final pre/post activation            |
+| y, ŷ          | b × n₃              | Ground truth + prediction            |
+| dZ, dW, db    | match forward dims  | Gradients for backpropagation        |
+
+---
+
+## 🧠 Notes
+- **m** = input size into the layer (output size of previous layer)
+- **n** = output size of the layer (number of neurons)
+- All `dW` have shape `[m×n]` like their respective `W`
+- Broadcasting lets `b ∈ ℝ^{1×n}` apply across batch
+- You only need to keep track of shapes to debug flow and gradients
