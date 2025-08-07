@@ -1,0 +1,238 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from pprint import pprint # For pretty printing
+from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# Generate noisy data for training
+X_noisy, y_noisy = make_moons(n_samples=80, noise=0.3)
+
+# Generate clean data for testing
+X_clean, y_clean = make_moons(n_samples=20, noise=0.0)  # different seed = different points
+
+# Combine into one dataset
+X = np.vstack((X_noisy, X_clean))
+y = np.hstack((y_noisy, y_clean))
+
+# Normalize all features (fit on training only)
+scaler = StandardScaler()
+X_noisy = scaler.fit_transform(X_noisy)
+X_clean = scaler.transform(X_clean)
+
+# Final split
+X_train, y_train = X_noisy, y_noisy
+X_test, y_test = X_clean, y_clean
+
+
+# Visually see the two moons to understand the dataset
+""""
+plt.figure(figsize=(6, 5))
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap='bwr', edgecolors='k')
+plt.title("Two Moons Dataset")
+plt.xlabel("X1")
+plt.ylabel("X2")
+plt.grid(True)
+plt.show()
+"""
+
+# Define the parameters for the neural network
+Batches = 10 # Number of batches to split the dataset into (Must be a divisor of the dataset length. / Int when divided by the dataset length)
+epochs = 70000 # Number of epochs for training
+lambda_l2 = 0.0001 # L2 regularization parameter
+
+    
+learning_rate = 0.003 # Initial learning rate
+initial_lr = 0.003
+final_lr = 0.00005
+decay_epochs = 60000  # decay
+decay_rate = (final_lr / initial_lr) ** (1 / decay_epochs)
+
+
+X_batches = np.array_split(X_train, Batches) # Split dataset into batches
+X_test_batches = np.array_split(X_test, Batches) # Split test dataset into batches
+
+y_batches = np.array_split(y_train, Batches) # Split labels into batches
+y_test_batches = np.array_split(y_test, Batches) # Split test labels into batches
+
+InputSize = X_batches[0].shape[1] # 2 features (Amount of data [0], Amount of features/inputs [1])
+Hidden1Size = 10
+Hidden2Size = 5
+OutputSize = 1
+
+# - Weights:             `W₁ ∈ ℝ^{n₀×n₁}` ← (m = n₀, n = n₁)
+
+b = Batches # 10
+n = [InputSize, Hidden1Size, Hidden2Size, OutputSize] # [2, 5, 3, 1]
+
+# m = nᵢ₋₁ = number of inputs into layer i (previous layer’s neuron count)
+
+parameters  = {
+
+}
+
+# Generate Weights first, W₁ ∈ ℝ^{n₀×n₁} ... W₁ ∈ ℝ^{n₀×n₁} ect.
+for i in range(len(n) - 1):
+    #print(i)
+    fan_in = n[i]
+    fan_out = n[i+1]
+
+    # He Initialization for FastGeLU
+    std = np.sqrt(2.0 / fan_in)
+    parameters[f'w{i}'] = np.random.randn(fan_in, fan_out) * std
+    parameters[f"b{i}"] = np.zeros((1, n[i+1]))  # Biases, b₁ ∈ ℝ^{1×n₁}
+
+def FastGeLU(x):
+    # Implementation of the FastGeLU activation function
+    return 0.5 * x * (1 + np.tanh(np.sqrt(2/np.pi) * (x + 0.044715 * np.power(x, 3))))
+
+def MatrixDerivativeFastGeLU(x):
+    # Derivative of the FastGeLU activation function
+    return (
+        0.5 * (1 + np.tanh(np.sqrt(2/np.pi) * (x + 0.044715 * x**3)))
+        + 0.5 * x * (1 - np.tanh(np.sqrt(2/np.pi) * (x + 0.044715 * x**3))**2)
+        * np.sqrt(2/np.pi) * (1 + 3 * 0.044715 * x**2)
+    )
+
+def Sigmoid(x):
+    # Sigmoid activation function
+    return 1 / (1 + np.exp(-x))
+
+def MatrixDerivativeSigmoid(x):
+    # Derivative of the Sigmoid activation function
+    sig = Sigmoid(x)
+    return sig * (1 - sig)
+
+def BCELoss(y_true, y_pred):
+    # Binary Cross-Entropy Loss
+    epsilon = 1e-15  # To avoid log(0)
+    y_pred = np.clip(y_pred, epsilon, 1 - epsilon)  # Clip predictions to avoid log(0)
+    return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+
+def MatrixDerivativeBCELoss(y_true, y_pred):
+    # Derivative of Binary Cross-Entropy Loss
+    epsilon = 1e-15  # To avoid division by zero
+    y_pred = np.clip(y_pred, epsilon, 1 - epsilon)  # Clip predictions to avoid log(0)
+    return -(y_true / y_pred) + ((1 - y_true) / (1 - y_pred))
+
+# Z{i+1} = A{i} @ w{i} + b{i}
+
+# A{i+1} = f(Z{i+1})
+
+def ForwardPass(X, parameters):
+
+    A = X  # Start with input layer
+    zs = []
+    activations = []  # Store activations for each layer
+
+    for i in range(len(n) - 1):
+        Z = A @ parameters[f'w{i}'] + parameters[f'b{i}']  # Linear transformation
+        zs.append(Z)  # Store the linear transformation for this layer
+        if i < len(n) - 2:  # For hidden layers, use FastGeLU
+            A = FastGeLU(Z)  # Activation function for hidden layers
+        else:  # For output layer, use Sigmoid 
+            A = Sigmoid(Z)  # Activation function for output layer
+        activations.append(A)  # Store the activation for this layer
+
+        
+    return activations, zs
+
+def get_input_to_layer(i, A, X_batch):
+    if i == 1:
+        return X_batch
+    return A[i - 2]
+
+
+for epoch in range(epochs):
+
+    learning_rate *= decay_rate
+
+    perm = np.random.permutation(len(X_train))
+    X_shuffled = X_train[perm]
+    y_shuffled = y_train[perm]
+
+    X_batches = np.array_split(X_shuffled, Batches)
+    y_batches = np.array_split(y_shuffled, Batches)
+
+    for batch in range(Batches):
+        # Forward pass for each batch
+        A, zs = ForwardPass(X_batches[batch], parameters)
+
+        #print(A)
+
+        # To access the pre-activation (Z) or activation (A) for a specific layer, sample, and neuron:
+        # zs[layer][sample, neuron] -> pre-activation (Z) at given layer, sample, neuron
+        # A[layer][sample, neuron]  -> activation (A) at given layer, sample, neuron
+        
+        # Compute loss and backpropagation would go here
+        # This is where you would implement the backward pass and update weights
+
+        #pprint(y_batches)
+        #pprint(y_batches[batch].reshape(-1, 1))
+        y_true = y_batches[batch].reshape(-1, 1)  # shape (batch_size, 1)
+        y_pred = A[-1]
+
+        loss = BCELoss(y_true, y_pred)
+
+        DA_L = MatrixDerivativeBCELoss(y_true, y_pred)
+        DZ_L = DA_L * MatrixDerivativeSigmoid(zs[-1])  # Derivative of the output layer
+
+        m = y_true.shape[0]  # Number of samples in the batch
+
+        dW_L = (A[-2].T @ DZ_L) / m # Gradient for weights of the last layer
+        db_L = np.sum(DZ_L, axis=0, keepdims=True) / m
+
+        
+
+        LastLayer = len(n) - 2 
+        ChangeW = - learning_rate * (dW_L + lambda_l2 * parameters[f'w{LastLayer}'])
+        ChangeB = - learning_rate * db_L
+
+        #pprint(parameters)
+
+        LastLayer = f"{len(n) - 2}"  # Index of the last layer
+
+        parameters[f'w{LastLayer}'] += ChangeW
+        parameters[f'b{LastLayer}'] += ChangeB
+
+
+        # Update the parameters for the previous layers
+
+        PreviousDerivativeActivation = DZ_L  # Store the derivative of the activation for the last layer
+
+        for i in reversed(range(1, len(n) - 1)):
+            dA = PreviousDerivativeActivation @ parameters[f"w{i}"].T
+            DZ_L = dA * MatrixDerivativeFastGeLU(zs[i-1])
+            input_to_layer = get_input_to_layer(i, A, X_batches[batch])
+            dW_L = (input_to_layer.T @ DZ_L) / m
+            db_L = np.sum(DZ_L, axis=0, keepdims=True) / m
+            PreviousDerivativeActivation = DZ_L
+
+            ChangeW = - learning_rate * (dW_L + lambda_l2 * parameters[f'w{i-1}'])
+            ChangeB = - learning_rate * db_L
+            parameters[f'w{i-1}'] += ChangeW
+            parameters[f'b{i-1}'] += ChangeB
+
+    if epoch % 1000 == 0:
+        # Calculate loss for the entire training set
+        A, _ = ForwardPass(X_train, parameters)
+        y_pred = A[-1]
+        loss = BCELoss(y_train.reshape(-1, 1), y_pred)
+        print(f"Epoch {epoch}, Loss: {loss:.4f}")
+
+
+# TESTING
+
+A_test, _ = ForwardPass(X_test, parameters)
+y_test_pred = A_test[-1]
+
+
+# Loss
+test_loss = BCELoss(y_test.reshape(-1, 1), y_test_pred)
+print(f"\nFinal Test Loss: {test_loss:.4f}")
+
+# Accuracy (optional)
+predictions = (y_test_pred > 0.5).astype(int)
+accuracy = np.mean(predictions == y_test.reshape(-1, 1))
+print(y_test_pred.flatten())
+print(f"Final Test Accuracy: {accuracy * 100:.2f}%")
