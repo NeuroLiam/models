@@ -1,0 +1,130 @@
+Purpose: 
+
+To calculate the gradient of a neural network with respect to the loss function, which can be used for gradient decent
+Forward pass computes predictions, loss functions rank how good the prediction was, backwards pass allows you to calculate the gradients to update weights and biases
+Loss function → The goal of the network is to minamize this giving a target gradient computation
+Activation function → Affects the derivatives shapes 
+Partial derivatives → How a single varible effects the loss function
+Chain rule → backbone of backpropergation, allows you to calculate rate of change when a varible is passed through several functions
+
+
+
+
+Core ideas:
+
+Do get ∂L/∂w, ∂L/∂b
+We apply the chain rule throughout the process to find these partial derivatives
+∂L/∂w = ∂L/∂A * ∂A/∂Z * ∂Z/∂w or ∂Z/∂b then if next layer loop back to ∂L/∂A
+Note how the weight or bias is inside of Z which is inside of A which is inside of the loss function,
+Thats why we use chain rule.
+
+
+
+
+Step by step:
+
+Forwardpass - Save A and Z for each layer
+
+Output layer
+
+∂L/∂w = ∂L/∂A * ∂A/∂Z * ∂Z/∂w
+∂L/∂b = ∂L/∂A * ∂A/∂Z * ∂Z/∂b
+
+
+Hidden layers
+
+To do the hidden layer you need to use the last layers ∂L/∂Z (Hence the need to save ∂L/∂Z from the last layer)
+So it would be
+∂L/∂Z (layer infront) * ∂Z (Layer infront)/∂A (Current layer) * ∂A/∂Z (current) * ∂Z/∂w or ∂Z/∂b
+
+When looping it would look like ∂L/∂Z[l] = ∂Z[l+1]/∂A[l] * ∂L/∂Z[l+1] * ∂A[l]/∂Z[l]
+Then you take the hidden layer’s error from infront (∂L/∂Z[l+1])
+Multiply it by ∂Z[l+1]/∂A[l]  (this is just the weights from the layer infront)
+Multiply that by ∂A[l]/∂Z[l]  (activation derivative for the current layer)
+That gives you ∂L/∂Z[l] for this layer
+Repeat l = L-1 down to 1
+When doing batches, put 1/m on dW and db to average over the batch (m = batch size)
+
+Updating weights
+
+You take the ∂L/∂w and inverse the values by multiplying by -1, This is because ∂L/∂w points in the gradient meaning that it will increase the loss function,
+to minamize the loss function you need to go in reverse of the gradient to go down to the bottom of the graph
+
+Once you inverse ∂L/∂w you multiply it by the learning rate to make incrimental improvements that avoid the model from fluxuating, 
+
+
+
+
+Coded Example:
+
+    for batch in range(Batches):
+        # Forward pass for each batch
+        A, zs = ForwardPass(X_batches[batch], parameters) # Forward pass then store A and Z
+
+        y_true = y_batches[batch].reshape(-1, 1)  # shape (batch_size, 1) # Calculate loss functions
+        y_pred = A[-1]
+
+        loss = BCELoss(y_true, y_pred) # Loss function
+
+        # Calculate the output back propergation seperate as it makes the loop simpler and the output's position doesnt change so it can be hardcoded
+        
+        DA_L = MatrixDerivativeBCELoss(y_true, y_pred) # Calculating the partial derivative of the loss function
+        DZ_L = DA_L * MatrixDerivativeSigmoid(zs[-1])  # Partial Derivative of the output pre-activation
+
+        m = y_true.shape[0]  # Number of samples in the batch
+
+        dW_L = (A[-2].T @ DZ_L) / m # Gradient for weights of the last layer
+        db_L = np.sum(DZ_L, axis=0, keepdims=True) / m # Same as above for the bias
+
+        # The code above has ran the forward pass, Stores Z and A, and calculated the partial derivative of ∂L/∂w and ∂L/∂b which looks like
+        # ∂L/∂w = ∂L/∂A * ∂A/∂Z * ∂Z/∂w
+        # ∂L/∂b = ∂L/∂A * ∂A/∂Z * ∂Z/∂b
+
+        # L2 regularization keeps weights small (reduces overfitting).
+        # L_total = L_data + (λ/2) * sum(||W||^2)
+        # Gradient becomes: dW_total = dW_data + λ * W
+        # (If your loss is averaged over batch size m, use λ/m for consistency.)
+        # Note: we usually don't regularize biases.
+        # Exploding gradients are handled by other things (lower LR, gradient clipping, good init, normalization), not L2.
+        # Lambda is the L2 regularlization below
+
+        LastLayer = len(n) - 2 # Calculating where the weights will be stored for the last layer
+        ChangeW = - learning_rate * (dW_L + lambda_l2 * parameters[f'w{LastLayer}']) # Here
+        ChangeB = - learning_rate * db_L # We multiply the partial derivative by the negative learning rate to inverse and make the gradient decent smoother
+
+        # We calculate the Change then we will apply the change to the function, It looks cleaner than doign ti all on one line
+
+        LastLayer = f"{len(n) - 2}"  # Index of the last layer
+
+        # Applying the change
+        
+        parameters[f'w{LastLayer}'] += ChangeW 
+        parameters[f'b{LastLayer}'] += ChangeB
+
+
+        # Update the parameters for the previous layers
+
+        PreviousDerivativeActivation = DZ_L  # Store the derivative of the activation for the last layer
+
+        for i in reversed(range(1, len(n) - 1)):
+            dA = PreviousDerivativeActivation @ parameters[f"w{i}"].T    # dA = (W[i])^T * δ[i]  (pulls error back from layer i to activations of layer i-1)
+            DZ_L = dA * MatrixDerivativeFastGeLU(zs[i-1])                # Calculate the partial derivatives again the same way                          
+            input_to_layer = get_input_to_layer(i, A, X_batches[batch])  # All of this is the same as before
+            dW_L = (input_to_layer.T @ DZ_L) / m
+            db_L = np.sum(DZ_L, axis=0, keepdims=True) / m
+            PreviousDerivativeActivation = DZ_L
+
+            ChangeW = - learning_rate * (dW_L + lambda_l2 * parameters[f'w{i-1}'])
+            ChangeB = - learning_rate * db_L
+            parameters[f'w{i-1}'] += ChangeW
+            parameters[f'b{i-1}'] += ChangeB
+
+            # The only thing thats different is dA and using I to calcualte the position atwhich to get the A, A and W
+
+
+
+
+I decided to make this without using any machine learning libary as I programming what I learn helps me understand the concept better that reading and theorizing about it
+@ represents classic matrix mulitplication and * represents element wise multiplication
+# .T transposes the matricies to be compatable to multiply, e.g 5x3 @ 5x6, you transpose 5x3 to become 3x5 so you can now do classic matrix multiplication which then is 3x5 @ 5x6
+Which outputs a matrix of size 3x6
