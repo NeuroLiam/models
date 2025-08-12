@@ -6,10 +6,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 # Generate noisy data for training
-X_noisy, y_noisy = make_moons(n_samples=80, noise=0.3)
+X_noisy, y_noisy = make_moons(n_samples=5000, noise=0.4)
 
 # Generate clean data for testing
-X_clean, y_clean = make_moons(n_samples=20, noise=0.0)  # different seed = different points
+X_clean, y_clean = make_moons(n_samples=1000, noise=0.2) 
 
 # Combine into one dataset
 X = np.vstack((X_noisy, X_clean))
@@ -42,9 +42,9 @@ epochs = 70000 # Number of epochs for training
 lambda_l2 = 0.0001 # L2 regularization parameter
 
     
-learning_rate = 0.003 # Initial learning rate
-initial_lr = 0.003
-final_lr = 0.00005
+learning_rate = 0.05 # Initial learning rate
+initial_lr = 0.05
+final_lr = 0.0002
 decay_epochs = 60000  # decay
 decay_rate = (final_lr / initial_lr) ** (1 / decay_epochs)
 
@@ -218,7 +218,8 @@ for epoch in range(epochs):
         A, _ = ForwardPass(X_train, parameters)
         y_pred = A[-1]
         loss = BCELoss(y_train.reshape(-1, 1), y_pred)
-        print(f"Epoch {epoch}, Loss: {loss:.4f}")
+        print("Learning Rate: " + str(learning_rate))
+        print(f"Epoch {epoch}, Loss: {loss:.6f}")
 
 
 # TESTING
