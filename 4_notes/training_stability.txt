@@ -1,0 +1,74 @@
+Purpose:
+
+To ensure training is smooth by making sure gradient decent is controlled and improve model generalization so the model converges faster without exploding/vanishing gradient + overfitting
+
+
+
+------------------------------------------------------------------------
+Weight Initilization:
+
+Why: To prevent early exploding or vanishing gradient activations.
+     Keep variance of outputs across the model consistant
+     Effects how fast the model learns in the first couple of echos
+
+
+Common methods: 
+
+Xavier initialization (For tahn/sigmoid), Var(W) = 2 / (n_in + n_out)
+He initialization (For ReLU/Variants), Var(W) = 2 / n_in
+LeCun initialization (For SeLU), Var(W) = 1 / n_in
+Bias, Usually set to 0
+n_in = Number of input connections to a layer/number of neurons in the previous layer
+n_out = Number of neurons in the current layer
+
+
+
+------------------------------------------------------------------------
+Regularization Techniques:
+
+Why: Reduces overfitting by discouraging overly complex weights or memorization.
+
+
+L2 regularization:
+
+(λ/2m) * Σ||W||² (Added ontop of the loss function)
+dW += (λ/m) * W  (For gradient update)
+Keeps weights small and stable.
+
+
+Dropout: 
+
+Randomly set activations to zero during training
+Forces the model to learn multiple slightly different ways to solve a problem
+
+
+Early Stopping:
+
+Stop training when loss stops improving after X echos
+Prevents training past the point of generalization
+
+
+
+------------------------------------------------------------------------
+Calculating Variance:
+
+Var(x) = (1/n) * Σ (x_i - μ)^2
+
+
+
+------------------------------------------------------------------------
+Relation to LLM Training:
+
+LLMs have lots of layers so they are sensitive to initalization
+Regularlization prevents overfitting in feed forward and attention layers
+Weight initalization stabalizes self-attention since small scaling issues cause vast issues across large models
+
+
+
+------------------------------------------------------------------------
+Residual Connections:
+
+Carry the input to the layer directly to the output bypassing the transformations inbetween
+output = LayerNorm(x + F(x))
+x is the origonal input, F(x) is the transformation
+In transformers, used around both self-attention and feed-forward sublayers.
