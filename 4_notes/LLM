@@ -1,0 +1,30 @@
+Purpose:
+
+What is a LLM
+How it turns tokens -> embeddings -> transformer stack -> logits -> probabilities.
+
+
+
+
+Tokenization -> Embedding -> Positional Info -> ([Multi Head Attention -> Feed Forward Network] with residual connections + normalization) * N -> LM head -> Softmax -> Loss function -> Backpropagation
+
+
+
+
+Tokenization:
+
+Goal: To be able to turn a sentance into numbers that the llm can use to predict the next word in a sequence
+Methods: 
+BPE          = Find the pairs of letters that appears the most and merge them giving them and assign a number number
+Wordpiece    = Similar to BPE but it uses precentage of conditional probability rather than frequency, count(A,B)/Count(A)
+Unigram      = Score each token by how likely it is across all segmentations of the text, then remove the lowest-probability tokens until you reach the target vocab size.
+Example: Tokenization -> Token Ization
+
+
+
+
+Self-Attention
+
+Goal: To allow the network to gather context between words to effectivly predict the next word
+
+(to be continued)
