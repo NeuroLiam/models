@@ -72,3 +72,9 @@ Carry the input to the layer directly to the output bypassing the transformation
 output = LayerNorm(x + F(x))
 x is the origonal input, F(x) is the transformation
 In transformers, used around both self-attention and feed-forward sublayers.
+
+
+
+------------------------------------------------------------------------
+Quick Addon:
+Normalization reshapes all values so they are on a consistant scale which stabalizes training
