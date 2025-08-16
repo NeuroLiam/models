@@ -1,0 +1,132 @@
+Purpose:
+
+What is a LLM
+How it turns tokens -> embeddings -> transformer stack -> logits -> probabilities.
+
+
+
+
+Tokenization -> Embedding -> Positional Info -> ([Multi Head Attention -> Feed Forward Network] with residual connections + normalization) * N -> LM head -> Softmax -> Loss function -> Backpropagation
+
+
+
+
+Tokenization:
+
+Goal: To be able to turn a sentance into numbers that the llm can use to predict the next word in a sequence
+Methods: 
+BPE          = Find the pairs of letters that appears the most and merge them giving them and assign a number number
+Wordpiece    = Similar to BPE but it uses precentage of conditional probability rather than frequency, count(A,B)/Count(A)
+Unigram      = Score each token by how likely it is across all segmentations of the text, then remove the lowest-probability tokens until you reach the target vocab size.
+Example: Tokenization -> Token Ization
+
+
+
+
+Embedding:
+
+Input Embedding
+Purpose: To map tokenized words into a lookup table that represents a higher dimensional space, where each token is mapped to a learned vector that captures features of the word.
+I like to think of it as a layer of neurons that do a linear transformation without a bias, Where it takes the token, multiplies it by a weight and gives and output,
+each neuron representing a vector in space, P.S. The tokens are not combint like a traditional NN, If embedding dimension = 50, then each token is mapped to a 50-dimensional vector, so the
+output would be E∈R^V×d where V is vocab size, d is embedding size, e.g. E∈R^10000×50 so 10000 down and 50 right
+Positional Info
+Purpose: Help the model understand where a token is in a sentance
+It does this by applying a offset to each vector that maps where it is in a sentance
+In Attention Is All You Need they use sinusoidal positional encodings:
+PE[p, 2i]   = sin(p / 10000^(2i/d_model))
+PE[p, 2i+1] = cos(p / 10000^(2i/d_model))
+We add this to the token embedding: X0[p] = token_embed[p] + PE[p]
+This embedds the position as the model learns what each offset means in relation to where the word should be allowing it to understand order
+
+
+
+
+Self-Attention:
+
+Goal: To allow the network to gather context between words to effectivly predict the next word
+Q=XWQ​,K=XWK​,V=XWV
+I like to think of query as a question, its a vector pointing in a direction of what it expects
+The movement from the origin to the point of the vector I like to think of as the question
+And the space at which it is pointing to is what it expects
+The Key lists the qualities of the token,
+E.G. Blue in Blue cat is an adjective so we could think in some higher-uninterpritable dimension it representing the qualities like being an adjective
+By getting the dot product of the Query and Key we find how closely related they are in the high-dimensional space,
+This mean that the question (query) and the qualities of the token (key) match closely
+The value represents how important this change is for the prediction of the next word, Blue could give a high dot product, but
+It might not relate to the prediction of the next word like "The blue cat jumped on the owners soft " ... bed or matress ect
+the fact the cat is blue might relate to the question but it might not matter alot for the prediction of the word bed or matress
+therefore the value is used to amplify or squash the values depending on there relivence in the prediction
+query asks → key matches → value passed on
+
+A = softmax((QK^T)/√(dk) + M)V
+
+M is the mask, this stops the model from seeing future words aka cheating, M is a vector which is -infinity
+T transforms the matrix so 5x3 turns to 3x5
+
+O(T^2 * d) = long contexts = expensive to compute
+
+The sum of the row when doing softmax should add to 1 if you have done it right
+
+
+
+
+Multi-Head Attention:
+
+Why: Differt heads have different relations
+Casual masking applied per head
+
+
+
+
+Feed-Forward Network:
+
+FFN(x)=W2​σ(W1​x+b1​)+b2​ #Note: We dont apply the activation function to the 2nd layer
+Normally GeLU/SiLU is used for FFN's in modern LLMs
+
+
+
+
+Residuals + LayerNorm:
+
+Risiduals: carry input around each sublayer
+A sublayer is each component of a LLM like self attention or a FNN
+FFN counts as one sublayer (two linears + activation inside), so you add one residual around the whole FFN and one around the SA sublayer
+
+Normalization reshapes all values so they are on a consistant scale which stabalizes training
+Normalization is usually applied before a LLM block (Self-attention -> FNN)
+
+
+
+
+Masking:
+
+You set the values after t to - infinite
+Form: Upper triangle
+
+
+
+
+LM Head (output layer):
+
+Same as input embed but for decoding the higher dimensional lookup table, Often the reverse values for the input embed are used but in some models they decide to train it seperatly
+You then take the output and softmax it
+The loss is Cross-entropy against next-token ids
+
+
+
+
+Key Equations:
+
+Attention: softmax((QK^T)/√(dk) + M)V
+Block (pre-LN): H1​=X+Attn(LN(X)),Y=H1​+FFN(LN(H1​))
+Loss: CE = −logp(ynext​|context)
+
+
+
+
+Side Notes:
+
+Store past K, V to reduce cost from O(T^2) -> O(T)
+
+
